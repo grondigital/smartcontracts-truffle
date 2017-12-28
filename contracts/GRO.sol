@@ -134,6 +134,7 @@ contract GRO is StandardToken {
     // allows controlWallet to update the price within a time contstraint, allows fundWallet complete control
     // can only increase by by 20 percent within waitTime
     // default is 5 hours
+    // TODO: Verify whether this should be a manual process for set ICO sales periods
     function updatePrice(uint256 newNumerator) external onlyManagingWallets {
         require(newNumerator > 0);
         require_limited_change(newNumerator);
@@ -178,8 +179,10 @@ contract GRO is StandardToken {
 
     // Add the participant to the whitelist
     // calls allocateTokens
-    
+    // This should only be called during the pre-sale phase by fund wallet
+    // TODO: There is no date range check for pre-sale period and related bonus tokens
     function allocatePresaleTokens(address participant, uint amountTokens) external onlyFundWallet {
+      // TODO: this block range check should probably be less than a defined pre-sale end date
         require(block.number < fundingEndBlock);
         require(participant != address(0));
         whitelist[participant] = true; // automatically whitelist accepted presale
@@ -199,10 +202,9 @@ contract GRO is StandardToken {
         buyTo(msg.sender);
     }
 
-    // alloacte tokens to the participant amount allocated is
+    // alloacte tokens to the participant. amount allocated is
     // determined by the current price and the value specified in the
-    // message
-    // add msg value ether to the fund wallet 
+    // message add msg value ether to the fund wallet
     function buyTo(address participant) public payable onlyWhitelist {
         require(!halted);
         require(participant != address(0));
@@ -219,6 +221,7 @@ contract GRO is StandardToken {
     function icoNumeratorPrice() public constant returns (uint256) {
         uint256 icoDuration = safeSub(block.number, fundingStartBlock);
         uint256 numerator;
+	// TODO: What about the pre-sale period?
         if (icoDuration < 80640 ) { // #blocks = 2*7*24*60*60/15 = 80640
             numerator = safeMul(currentPrice.numerator, 13000);
             return numerator;

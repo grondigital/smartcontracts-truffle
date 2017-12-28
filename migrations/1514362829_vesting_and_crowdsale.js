@@ -7,8 +7,11 @@ module.exports = function(deployer, network, accounts) {
 	var fundingWallet = accounts[0];
 	var controlWallet = accounts[1];
 	var priceNumerator = 1;
-	var startingBlockInput = 1;
-	var endBlockInput = 2;
+
+	// #blocks = 6*7*24*60*60/15 = 241920
+	var blocksInSixWeeks = 241920
+	var startingBlockInput = web3.eth.blockNumber; // current block number
+	var endBlockInput = startingBlockInput + blocksInSixWeeks; // TODO: confirm block values
 	
 	deployer.deploy(GRO, controlWallet, priceNumerator, startingBlockInput, endBlockInput).then(function (){
 	    return deployer.deploy(GROVesting, GRO.address, endBlockInput);
