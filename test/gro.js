@@ -6,9 +6,10 @@ contract('GRO', function(accounts) {
     var controllWalletInput = accounts[1];
     var vestingContractAddress = accounts[2];
     var preSaleAllocationAddress = accounts[3];
+    var randomAddress = accounts[4];
     var priceNumeratorInput = 1;
     var expectedTokenCap = 950000000 * Math.pow(10, 18);
-    
+
     contract('Construction, getters, setters', function(accounts) {
 
 	it('returns the correct fundWallet address', function(){
@@ -42,7 +43,7 @@ contract('GRO', function(accounts) {
     });
     
     // Redeploy contracts to network
-    contract('Pre-sale interactions', function(accounts) {
+    contract('allocatePresaletokens', function(accounts) {
 
 	it("starts with 0 tokens issued", function() {
 	    return GRO.deployed()
@@ -70,6 +71,37 @@ contract('GRO', function(accounts) {
 					.then(function(response){
 					    assert.equal(true, response);
 					});
+				});
+			});
+		});
+	});
+
+	// FIXME: Assuming 0 totalSupply
+	it('only allows the fundwallet to allocate pre-sale tokens', function() {
+	    var amountTokens  = 100;
+	    
+	    return GRO.deployed()
+		.then(function(instance) {
+		    var gro = instance;
+
+		    return gro.allocatePresaleTokens(
+			preSaleAllocationAddress,
+			amountTokens,
+			{from: randomAddress})
+			.catch(function(error){
+			    // Transaction reverted
+			})
+		    
+			.then(function() {
+			    return gro.whitelist(randomAddress)
+				.then(function(response){
+				    assert.equal(false, response);
+				});
+			})
+			.then(function() {
+			    return gro.totalSupply()
+				.then(function(response) {					    
+				    assert.equal(0, response.toNumber());
 				});
 			});
 		});
@@ -102,11 +134,52 @@ contract('GRO', function(accounts) {
 				})
 				.then(function() {
 				    return gro.totalSupply()
-					.then(function(response) {					    
+					.then(function(response) {    
 					    assert.equal(expectedTotalSupply, response.toNumber());
 					});
 				});	
 			});		   		    
+		});
+	});
+
+    });
+
+    contract('verifyParticipant', function() {
+	it('should add a participant to the whitelist', function(){
+	    return GRO.deployed()
+		.then(function(instance) {
+		    return instance.verifyParticipant(randomAddress)
+			.then(function() {
+			    return instance.whitelist(randomAddress)
+				.then(function(response){
+				    assert.equal(true, response);
+				});
+			});
+		});
+	});
+    });
+
+    contract('buy', function() {
+	it('should update the balance for the sender\'s address', function(){
+	    var wei = web3.toWei(1, "ether"); // ETH - 10,000 GRO by default
+	    
+	    return GRO.deployed()
+		.then(function(instance) {
+		    var gro = instance;
+		    return  gro.verifyParticipant(randomAddress)
+			.then(function() {
+			    return gro.currentPrice()
+				.then(function(price){
+				    var expectedBalance = price.toNumber() * wei;
+				    return gro.buy({from: randomAddress, value: wei})
+					.then(function(){
+					    return gro.balanceOf(randomAddress)
+						.then(function(balance) {
+						    assert.equal(expectedBalance, balance.toNumber());
+						});
+					});
+				});
+			});
 		});
 	});
     });
