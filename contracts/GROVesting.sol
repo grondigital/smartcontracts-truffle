@@ -6,7 +6,7 @@ import './SafeMath.sol';
 /**
 * @title GROVesting
 * @dev GROVesting is a token holder contract that allows the specified beneficiary
-* to claim stored tokens after 6 month intervals
+* to claim stored tokens after 6 & 12 month intervals
 */
 
 contract GROVesting is SafeMath {
@@ -21,8 +21,6 @@ contract GROVesting is SafeMath {
     uint256 public secondRelease;
     bool private secondDone = false;
     uint256 public thirdRelease;
-    bool private thirdDone = false;
-    uint256 public fourthRelease;
 
     Token public ERC20Token; // ERC20 basic token contract to hold
 
@@ -30,8 +28,7 @@ contract GROVesting is SafeMath {
         initClaim,
         firstRelease,
         secondRelease,
-        thirdRelease,
-        fourthRelease
+        thirdRelease
     }
 
     Stages public stage = Stages.initClaim;
@@ -66,27 +63,27 @@ contract GROVesting is SafeMath {
 
     // in total 40% of GRO tokens will be sent to this contract
     // EXPENSE ALLOCATION: 28%          | TEAM ALLOCATION: 12% (vest over 2 years)
-    //   12% - Incentives and bonuses   | initalPayment: 4%
-    //   16% - Bankroll                 | firstRelease: 2%
-    //                                  | secondRelease: 2%
-    //   Expenses Breakdown:            | thirdRelease: 2%
-    //   50% - Software Development     | fourthRelease: 2%
+    //   12% - Incentives and bonuses
+    //   16% - Bankroll                 
+    //                                  
+    //   Expenses Breakdown:
+    //   50% - Software Development
     //   15% - Operations
     //   15% - Advisors
     //   10% - Marketing
     //   5% - Legal Framework & Finance
     //   5% - Contingencies
-    // initial claim is tot expenses + initial team payment
-    // initial claim is thus (28 + 4)/380 = 84.2105263% of GRO tokens sent here
-    // each other release (for team) is 3.947368425% of tokens sent here
+    //
+    // initial claim is bankroll - 16% = 152000000
+    // first release after 6 months - Incentives and bonuses - 12%
+    // second release after 12 months - Founders - 6%
+    // third release after 24 months - Founders - 6%
 
-    function claim() external
-    {
+    function claim() external {
         require(msg.sender == beneficiary);
         require(block.number > fundingEndBlock);
         uint256 balance = ERC20Token.balanceOf(this);
         // in reverse order so stages changes don't carry within one claim
-        fourth_release(balance);
         third_release(balance);
         second_release(balance);
         first_release(balance);
@@ -98,35 +95,30 @@ contract GROVesting is SafeMath {
     }
 
     function init_claim(uint256 balance) private atStage(Stages.initClaim) {
-        firstRelease = now + 26 weeks; // assign 4 claiming times
-        secondRelease = firstRelease + 26 weeks;
-        thirdRelease = secondRelease + 26 weeks;
-        fourthRelease = thirdRelease + 26 weeks;
-        uint256 amountToTransfer = safeMul(balance, 31999999994) / 100000000000;
-        ERC20Token.transfer(beneficiary, amountToTransfer); // now 15.7894737% tokens left
+        firstRelease = now + 26 weeks;                          // Incentives and bonuses
+        secondRelease = now + 52 weeks;                         // Founders
+        thirdRelease = secondRelease + 52 weeks;                // Founders
+        uint256 amountToTransfer = safeMul(balance, 40) / 100;  // send 100% of Bankroll - 40% of Expense Allocation
+        ERC20Token.transfer(beneficiary, amountToTransfer);     // now 60% tokens left
         nextStage();
     }
     function first_release(uint256 balance) private atStage(Stages.firstRelease) {
         require(now > firstRelease);
-        uint256 amountToTransfer = balance / 4;
-        ERC20Token.transfer(beneficiary, amountToTransfer); // send 25 % of team releases
+        uint256 amountToTransfer = safeMul(balance, 30) / 100;  // send 100% of incentives and bonuses - 30% of Expense Allocation
+        ERC20Token.transfer(beneficiary, amountToTransfer);     // now 30% tokens left
         nextStage();
     }
     function second_release(uint256 balance) private atStage(Stages.secondRelease) {
         require(now > secondRelease);
-        uint256 amountToTransfer = balance / 3;
-        ERC20Token.transfer(beneficiary, amountToTransfer); // send 25 % of team releases
+        uint256 amountToTransfer = balance / 2;             // send 50% of founders release - 15% of Expense Allocation
+        ERC20Token.transfer(beneficiary, amountToTransfer); // now 15% tokens left
         nextStage();
     }
     function third_release(uint256 balance) private atStage(Stages.thirdRelease) {
         require(now > thirdRelease);
-        uint256 amountToTransfer = balance / 2;
-        ERC20Token.transfer(beneficiary, amountToTransfer); // send 25 % of team releases
+        uint256 amountToTransfer = balance;                 // send 50% of founders release - 15% of Expense Allocation
+        ERC20Token.transfer(beneficiary, amountToTransfer);
         nextStage();
-    }
-    function fourth_release(uint256 balance) private atStage(Stages.fourthRelease) {
-        require(now > fourthRelease);
-        ERC20Token.transfer(beneficiary, balance); // send remaining 25 % of team releases
     }
 
     function claimOtherTokens(address _token) external {
@@ -137,5 +129,4 @@ contract GROVesting is SafeMath {
         uint256 balance = token.balanceOf(this);
         token.transfer(beneficiary, balance);
     }
-
 }

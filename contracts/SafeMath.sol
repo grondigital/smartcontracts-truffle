@@ -22,6 +22,14 @@ contract SafeMath {
     assert(c>=a && c>=b);
     return c;
   }
+  function safeNumDigits(uint number) internal returns (uint8) {
+    uint8 digits = 0;
+    while (number != 0) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
 
   // mitigate short address attack
   // thanks to https://github.com/numerai/contract/blob/c182465f82e50ced8dacb3977ec374a892f5fa8c/contracts/Safe.sol#L30-L34.

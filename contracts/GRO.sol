@@ -27,16 +27,21 @@ contract GRO is StandardToken {
     uint256 public waitTime = 5 hours;
 
     // fundWallet controlled state variables
-    // halted: halt buying due to emergency, tradeable: signal that assets have been acquired
+    // halted: halt buying due to emergency, tradeable: signal that GRON platform is up and running
     bool public halted = false;
     bool public tradeable = false;
+
+    // Competition Enabled
+    // Competition Blocks
+    bool private competitionEnabled = true;
+    uint256 private competitionBlocks = 20;
 
     // -- totalSupply defined in StandardToken
     // -- mapping to token balances done in StandardToken
 
     uint256 public previousUpdateTime = 0;
     Price public currentPrice;
-    uint256 public minAmount = 0.04 ether;
+    uint256 public minAmount = 0.05 ether; // 500 GRO
 
     // map participant address to a withdrawal request
     mapping (address => Withdrawal) public withdrawals;
@@ -96,16 +101,12 @@ contract GRO is StandardToken {
         require(safeSub(now, waitTime) >= previousUpdateTime);
         _;
     }
-    modifier only_if_increase (uint256 newNumerator) {
-        if (newNumerator > currentPrice.numerator) _;
+    modifier only_if_decrease (uint256 newNumerator) {
+        if (newNumerator < currentPrice.numerator) _;
     }
 
     // CONSTRUCTOR
-    // Setup funding wallet and controlwallet
-    // Setup price numerator
-    // Setup start and end funding blocks
-    // Add funing and control wallet to the whitelist
-    
+
     function GRO(address controlWalletInput, uint256 priceNumeratorInput, uint256 startBlockInput, uint256 endBlockInput) public {
         require(controlWalletInput != address(0));
         require(priceNumeratorInput > 0);
@@ -121,9 +122,7 @@ contract GRO is StandardToken {
     }
 
     // METHODS
-    // Funding wallet sends the vesting contract address
-    // Adds vestingcontract to thew whitelist
-    
+
     function setVestingContract(address vestingContractInput) external onlyFundWallet {
         require(vestingContractInput != address(0));
         vestingContract = vestingContractInput;
@@ -132,9 +131,6 @@ contract GRO is StandardToken {
     }
 
     // allows controlWallet to update the price within a time contstraint, allows fundWallet complete control
-    // can only increase by by 20 percent within waitTime
-    // default is 5 hours
-    // TODO: Verify whether this should be a manual process for set ICO sales periods
     function updatePrice(uint256 newNumerator) external onlyManagingWallets {
         require(newNumerator > 0);
         require_limited_change(newNumerator);
@@ -150,24 +146,19 @@ contract GRO is StandardToken {
         private
         only_if_controlWallet
         require_waited
-        only_if_increase(newNumerator)
+        only_if_decrease(newNumerator)
     {
         uint256 percentage_diff = 0;
         percentage_diff = safeMul(newNumerator, 100) / currentPrice.numerator;
-        percentage_diff = safeSub(percentage_diff, 100);
+        percentage_diff = safeSub(100, percentage_diff);
         // controlWallet can only increase price by max 20% and only every waitTime
         require(percentage_diff <= 20);
     }
-    // Vesting contract has to be set
-    // allocate an additional 40% of amountTokens to team
-    // the new total supply has to be less then the tokenCap
-    // allocate amountTokens to the participant address
-    // allocate developmentAllocation to vesting contract
-    
+
     function allocateTokens(address participant, uint256 amountTokens) private {
         require(vestingSet);
         // 40% of total allocated for Founders, Team incentives & Bonuses
-        uint256 developmentAllocation = safeMul(amountTokens, 380000000000000000) / 100000000000000000;
+        uint256 developmentAllocation = safeMul(amountTokens / 570000000, 380000000);
         // check that token cap is not exceeded
         uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
         require(safeAdd(totalSupply, newTokens) <= tokenCap);
@@ -177,12 +168,7 @@ contract GRO is StandardToken {
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
     }
 
-    // Add the participant to the whitelist
-    // calls allocateTokens
-    // This should only be called during the pre-sale phase by fund wallet
-    // TODO: There is no date range check for pre-sale period and related bonus tokens
     function allocatePresaleTokens(address participant, uint amountTokens) external onlyFundWallet {
-      // TODO: this block range check should probably be less than a defined pre-sale end date
         require(block.number < fundingEndBlock);
         require(participant != address(0));
         whitelist[participant] = true; // automatically whitelist accepted presale
@@ -191,8 +177,6 @@ contract GRO is StandardToken {
         AllocatePresale(participant, amountTokens);
     }
 
-    // Add participant to the white list
-    
     function verifyParticipant(address participant) external onlyManagingWallets {
         whitelist[participant] = true;
         Whitelist(participant);
@@ -202,9 +186,6 @@ contract GRO is StandardToken {
         buyTo(msg.sender);
     }
 
-    // alloacte tokens to the participant. amount allocated is
-    // determined by the current price and the value specified in the
-    // message add msg value ether to the fund wallet
     function buyTo(address participant) public payable onlyWhitelist {
         require(!halted);
         require(participant != address(0));
@@ -221,22 +202,39 @@ contract GRO is StandardToken {
     function icoNumeratorPrice() public constant returns (uint256) {
         uint256 icoDuration = safeSub(block.number, fundingStartBlock);
         uint256 numerator;
-	// TODO: What about the pre-sale period?
-        if (icoDuration < 80640 ) { // #blocks = 2*7*24*60*60/15 = 80640
-            numerator = safeMul(currentPrice.numerator, 13000);
+
+        uint256 firstBlockPhase = 80640; // #blocks = 2*7*24*60*60/15 = 80640
+        uint256 secondBlockPhase = 161280; // // #blocks = 4*7*24*60*60/15 = 161280
+        uint256 thirdBlockPhase = 241920; // // #blocks = 6*7*24*60*60/15 = 241920
+        //uint256 fourthBlock = 322560; // #blocks = Greater Than thirdBlock
+
+        if (icoDuration < firstBlockPhase ) {
+            numerator = 13000;
+            numerator = competitionCalculation(icoDuration, numerator);
             return numerator;
-        } else if (icoDuration < 161280 ) { // #blocks = 4*7*24*60*60/15 = 161280
-            numerator = safeMul(currentPrice.numerator, 12000);
+        } else if (icoDuration < secondBlockPhase ) { 
+            numerator = 12000;
+            numerator = competitionCalculation(icoDuration, numerator);
             return numerator;
-        } else if (icoDuration < 241920 ) { // #blocks = 6*7*24*60*60/15 = 241920
-            numerator = safeMul(currentPrice.numerator, 11000);
+        } else if (icoDuration < thirdBlockPhase ) { 
+            numerator = 11000;
+            numerator = competitionCalculation(icoDuration, numerator);
             return numerator;
         } else {
-            numerator = safeMul(currentPrice.numerator, 10000);
+            numerator = 10000;
+            numerator = competitionCalculation(icoDuration, numerator);
             return numerator;
         }
     }
-    // Withdraw tokens from the current token balance of the participant (message sender)
+
+    function competitionCalculation(uint256 icoDuration, uint256 numerator) returns (uint256 newNumerator) {
+        require(competitionEnabled);
+        if (safeNumDigits(icoDuration / (competitionBlocks)) == 0) {
+            numerator = numerator * 2;
+        }
+        return numerator;
+    }
+
     function requestWithdrawal(uint256 amountTokensToWithdraw) external isTradeable onlyWhitelist {
         require(block.number > fundingEndBlock);
         require(amountTokensToWithdraw > 0);
@@ -247,9 +245,7 @@ contract GRO is StandardToken {
         withdrawals[participant] = Withdrawal({tokens: amountTokensToWithdraw, time: previousUpdateTime});
         WithdrawRequest(participant, amountTokensToWithdraw);
     }
-    
-    // Transfer all tokens to participant's wallet
-    
+
     function withdraw() external {
         address participant = msg.sender;
         uint256 tokens = withdrawals[participant].tokens;
@@ -283,13 +279,18 @@ contract GRO is StandardToken {
         Withdraw(participant, tokens, 0); // indicate a failed withdrawal
     }
 
-    // get the withDraw value (in either) based on the price of the tokens
+
     function checkWithdrawValue(uint256 amountTokensToWithdraw) constant returns (uint256 etherValue) {
         require(amountTokensToWithdraw > 0);
         require(balanceOf(msg.sender) >= amountTokensToWithdraw);
         uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.numerator);
         require(this.balance >= withdrawValue);
         return withdrawValue;
+    }
+
+    // allow fundWallet or controlWallet to update Competition Blocks Frequency
+    function updateCompetitionBlocks(uint256 newCompetitionBlocks) external onlyFundWallet {
+        competitionBlocks = newCompetitionBlocks;
     }
 
     // allow fundWallet or controlWallet to add ether to contract
@@ -344,7 +345,6 @@ contract GRO is StandardToken {
     }
 
     // fallback function
-
     function() payable public {
         require(tx.origin == msg.sender);
         buyTo(msg.sender);
