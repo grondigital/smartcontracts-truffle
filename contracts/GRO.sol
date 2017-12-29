@@ -157,8 +157,15 @@ contract GRO is StandardToken {
 
     function allocateTokens(address participant, uint256 amountTokens) private {
         require(vestingSet);
-        // 40% of total allocated for Founders, Team incentives & Bonuses
-        uint256 developmentAllocation = safeMul(amountTokens / 570000000, 380000000);
+        // 40% of total allocated for Founders, Team incentives & Bonuses.
+
+	// Solidity v0.4.18 - floating point is not fully supported,
+	// so often integer division results in truncated values.
+	// Therefore we are multiplying out by 1000000 for
+	// precision. This allows ratios values up to 0.0000x or 0.00x percent
+	uint256 precision = 1000000;
+	uint256 allocationRatio = safeMul(amountTokens, precision) / 570000000;
+        uint256 developmentAllocation = safeMul(allocationRatio, 380000000) / precision;
         // check that token cap is not exceeded
         uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
         require(safeAdd(totalSupply, newTokens) <= tokenCap);

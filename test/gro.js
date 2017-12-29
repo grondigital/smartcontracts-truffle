@@ -12,180 +12,133 @@ contract('GRO', function(accounts) {
 
     contract('Construction, getters, setters', function(accounts) {
 
-	it('returns the correct fundWallet address', function(){
-	    return GRO.deployed().then(function (instance) {
-		return instance.fundWallet()
-		    .then(function (address) {
-			assert.equal(expectedFundingWallet, address);
-		    });
-	    });
+	it('returns the correct fundWallet address', async function(){
+	    let gro = await GRO.deployed();	    
+	    let address = await gro.fundWallet();
+
+	    assert.equal(address, expectedFundingWallet);
 	});
 	
-	it("sets the correct tokenCap", function() {
-	    return  GRO.deployed().then(function(instance) {
-		return instance.tokenCap().then(function(tokenCap) {
-		    assert.equal(expectedTokenCap, tokenCap.toNumber());
-		});
-	    }); 	
+	it("sets the correct tokenCap", async function() {
+	    let gro = await GRO.deployed();
+	    let cap = await gro.tokenCap();
+
+	    assert.equal(expectedTokenCap, cap);
 	});
 	
 
-	it("updates the price", function() {
-	    var newPrice = 3;
-	    return  GRO.deployed().then(function(instance) {
-		return instance.updatePrice(newPrice).then(function() {
-		    instance.currentPrice().then(function(price) {
-			assert.equal(newPrice, price);
-		    });
-		});
-	    });
+	it("updates the price", async function() {
+	    let expectedPrice = 3;
+	    let gro = await GRO.deployed();
+	    
+	    await gro.updatePrice(expectedPrice);
+	    let price = await gro.currentPrice();
+
+	    assert.equal(price.toNumber(), expectedPrice);
 	});
     });
     
     // Redeploy contracts to network
     contract('allocatePresaletokens', function(accounts) {
 
-	it("starts with 0 tokens issued", function() {
-	    return GRO.deployed()
-		.then(function(instance) {
-		    var gro = instance;
+	it("starts with 0 tokens issued", async function() {
+	    let gro = await GRO.deployed();
+	    let supply = await gro.totalSupply();
 
-		    return gro.totalSupply()
-			.then(function(supply) {
-			    assert.equal(0, supply.toNumber());
-			});
-		});
-	});
-	
-	it("sets the vesting contract address", function() {
-	    return GRO.deployed()
-		.then(function (instance) {
-		    var gro = instance;
-		    return gro.setVestingContract(vestingContractAddress)
-			.then(function() {
-			    return gro.vestingContract()
-				.then(function(address){				
-				    assert.equal(vestingContractAddress, address);
-				    // added to whitelist
-				    return gro.whitelist(vestingContractAddress)
-					.then(function(response){
-					    assert.equal(true, response);
-					});
-				});
-			});
-		});
+	    assert.equal(supply, 0);
+
+	    await gro.setVestingContract(vestingContractAddress);
+
+	    let address = await gro.vestingContract();
+	    assert.equal(vestingContractAddress, address);
+
+	    let status = await gro.whitelist(vestingContractAddress);
+	    assert.equal(status, true);	    
 	});
 
-	// FIXME: Assuming 0 totalSupply
-	it('only allows the fundwallet to allocate pre-sale tokens', function() {
-	    var amountTokens  = 100;
-	    
-	    return GRO.deployed()
-		.then(function(instance) {
-		    var gro = instance;
+	it('only allows the fundwallet to allocate pre-sale tokens', async function() {
+	    // redeploy to ensure 0 totalSupply
+	    let gro = await GRO.deployed();
 
-		    return gro.allocatePresaleTokens(
-			preSaleAllocationAddress,
-			amountTokens,
-			{from: randomAddress})
-			.catch(function(error){
-			    // Transaction reverted
-			})
-		    
-			.then(function() {
-			    return gro.whitelist(randomAddress)
-				.then(function(response){
-				    assert.equal(false, response);
-				});
-			})
-			.then(function() {
-			    return gro.totalSupply()
-				.then(function(response) {					    
-				    assert.equal(0, response.toNumber());
-				});
-			});
-		});
+	    try {
+		let amountTokens  = 100;
+		await gro.allocatePresaleTokens(preSaleAllocationAddress, amountTokens, {from: randomAddress});
+	    }
+	    catch (error) {
+		//error thrown - transaction reverted
+	    }
+
+	    let status = await gro.whitelist(randomAddress);
+	    assert.equal(status, false);
+
+	    let supply = await gro.totalSupply();
+	    assert.equal(supply, 0);	    
 	});
 	
 	// TODO: How are bonus tokens amounts determined for the pre-sale period?
-	it('allocates pre-sale tokens when using the fundWallet', function() {
-	    var amountTokens = 100;
-	    var expectedDevTeamAllocation = 66; // 40% of amountTokens is added to total supply
-	    // TODO: Follow up on this expectation
-	    var expectedTotalSupply = 166;
+	it('allocates pre-sale tokens when using the fundWallet', async function() {
+	    // For a max supply of 950M - 570M pub, 380M dev allocation	    
+	    let amountTokens = 285000000; // 50% the amount of public tokens
+	    let expectedDevTeamAllocation = 190000000; // 50% of dev allocation expected to be allocated
+	    let expectedTotalSupply = amountTokens + expectedDevTeamAllocation;
+
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
 	    
-	    return GRO.deployed()
-		.then(function(instance) {
-		    var gro = instance;
-		    
-		    return gro.balanceOf(vestingContractAddress)
-			.then(function(balance) {
-			    assert.equal(0, balance.toNumber());
-			})
-			.then(function(balance) {
-			    return gro.allocatePresaleTokens(
-				preSaleAllocationAddress,
-				amountTokens)			    
-				.then(function() {
-				    return gro.whitelist(preSaleAllocationAddress)
-					.then(function(response){
-					    assert.equal(true, response);
-					});
-				})
-				.then(function() {
-				    return gro.totalSupply()
-					.then(function(response) {    
-					    assert.equal(expectedTotalSupply, response.toNumber());
-					});
-				});	
-			});		   		    
-		});
+	    // initial balances
+	    let devBalance = await gro.balanceOf(vestingContractAddress);
+	    let participantBalance = await gro.balanceOf(preSaleAllocationAddress);
+	    let supply = await gro.totalSupply();
+	    
+	    assert.equal(devBalance.toNumber(), 0);
+	    assert.equal(participantBalance.toNumber(), 0);
+	    assert.equal(supply, 0);
+
+	    // called from accounts[0]
+	    await gro.allocatePresaleTokens(preSaleAllocationAddress, amountTokens);
+	    let status = await gro.whitelist(preSaleAllocationAddress);
+	    assert.equal(status, true, "Participant should be whitelisted");
+
+	    // post transaction balances
+	    devBalance = await gro.balanceOf(vestingContractAddress);
+	    participantBalance = await gro.balanceOf(preSaleAllocationAddress);
+	    supply = await gro.totalSupply();
+	    
+	    assert.equal(participantBalance.toNumber(), amountTokens, "Participant balance should be updated");	    
+	    assert.equal(devBalance.toNumber(), expectedDevTeamAllocation, "Dev team should receive allocation amount");
+	    assert.equal(supply.toNumber(), expectedTotalSupply, "Total supply should be updated with both allocations");
+	    
 	});
 
     });
 
     contract('verifyParticipant', function() {
-	it('should add a participant to the whitelist', async function(){
-	    // return GRO.deployed()
-	    // 	.then(function(instance) {
-	    // 	    return instance.verifyParticipant(randomAddress)
-	    // 		.then(function() {
-	    // 		    return instance.whitelist(randomAddress)
-	    // 			.then(function(response){
-	    // 			    assert.equal(true, response);
-	    // 			});
-	    // 		});
-	    // 	});
-
+	it('should add a participant to the whitelist', async function() {
 	    let gro = await GRO.deployed();	    
 	    await gro.verifyParticipant(randomAddress);
 	    let response = await gro.whitelist(randomAddress);
+
 	    assert.equal(response, true);	    
 	});
     });
 
     contract('buy', function() {
-	it('should update the balance for the sender\'s address', function(){
-	    var wei = web3.toWei(1, "ether"); // ETH - 10,000 GRO by default
+	it('should update the balance for the sender', async function(){
+	    let wei = web3.toWei(1, "ether"); 
+
+	    let gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+
+	    // has to be whitelisted
+	    await gro.verifyParticipant(randomAddress);
+	    await gro.buy({from: randomAddress, value: wei});
 	    
-	    return GRO.deployed()
-		.then(function(instance) {
-		    var gro = instance;
-		    return  gro.verifyParticipant(randomAddress)
-			.then(function() {
-			    return gro.currentPrice()
-				.then(function(price){
-				    var expectedBalance = price.toNumber() * wei;
-				    return gro.buy({from: randomAddress, value: wei})
-					.then(function(){
-					    return gro.balanceOf(randomAddress)
-						.then(function(balance) {
-						    assert.equal(expectedBalance, balance.toNumber());
-						});
-					});
-				});
-			});
-		});
+	    let price = await gro.currentPrice();
+	    let balanceInWei = await gro.balanceOf(randomAddress);
+	    let balanceInGro = web3.fromWei(balanceInWei.toNumber(), "ether") * 10000; // 1 ETH = 10000 GRO
+	    
+	    assert.equal(price.toNumber(), 1);
+	    assert.equal(balanceInGro, 10000);	    
 	});
     });
 });
