@@ -4,10 +4,11 @@
 
 This repo contains a truffle framework project and GRON digital smart contracts. 
 
-## Setup
+## Setup / pre-requisites
 
 1. Install/build [Ganache](https://github.com/trufflesuite/ganache/releases)
 2. Install [Truffle](http://truffleframework.com) - be sure version `4.0.4` or above is installed.
+3. Install [Node](https://nodejs.org/en/) version `8` and above.
 
 ```shell
 

@@ -110,9 +110,9 @@ contract('GRO', function(accounts) {
 	// TODO: How are bonus tokens amounts determined for the pre-sale period?
 	it('allocates pre-sale tokens when using the fundWallet', function() {
 	    var amountTokens = 100;
-	    var expectedDevTeamAllocation = 380; // 40% of amountTokens is added to total supply
+	    var expectedDevTeamAllocation = 66; // 40% of amountTokens is added to total supply
 	    // TODO: Follow up on this expectation
-	    var expectedTotalSupply = 480;
+	    var expectedTotalSupply = 166;
 	    
 	    return GRO.deployed()
 		.then(function(instance) {
@@ -145,17 +145,22 @@ contract('GRO', function(accounts) {
     });
 
     contract('verifyParticipant', function() {
-	it('should add a participant to the whitelist', function(){
-	    return GRO.deployed()
-		.then(function(instance) {
-		    return instance.verifyParticipant(randomAddress)
-			.then(function() {
-			    return instance.whitelist(randomAddress)
-				.then(function(response){
-				    assert.equal(true, response);
-				});
-			});
-		});
+	it('should add a participant to the whitelist', async function(){
+	    // return GRO.deployed()
+	    // 	.then(function(instance) {
+	    // 	    return instance.verifyParticipant(randomAddress)
+	    // 		.then(function() {
+	    // 		    return instance.whitelist(randomAddress)
+	    // 			.then(function(response){
+	    // 			    assert.equal(true, response);
+	    // 			});
+	    // 		});
+	    // 	});
+
+	    let gro = await GRO.deployed();	    
+	    await gro.verifyParticipant(randomAddress);
+	    let response = await gro.whitelist(randomAddress);
+	    assert.equal(response, true);	    
 	});
     });
 
