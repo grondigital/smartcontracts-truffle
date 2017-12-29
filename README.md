@@ -11,10 +11,14 @@ This repo contains a truffle framework project and GRON digital smart contracts.
 3. Install [Node](https://nodejs.org/en/) version `8` and above.
 
 ```shell
+brew install node # mac os only 
+npm install -g truffle
+npm install -g ethereumjs-testrpc
 
+#
 testrpc # start ganache / test-rpc
 
-# in a seprate terminal run 
+# in a seprate terminal
 truffle compile # compiles smart contracts
 truffle migrate # deploys smart contracts to test-rpc
 truffle test # run unit tests
