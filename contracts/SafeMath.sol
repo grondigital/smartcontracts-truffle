@@ -8,21 +8,21 @@ pragma solidity 0.4.18;
 
 contract SafeMath {
 
-  function safeMul(uint a, uint b) internal returns (uint) {
+  function safeMul(uint a, uint b) pure internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function safeSub(uint a, uint b) pure internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function safeAdd(uint a, uint b) pure internal returns (uint) {
     uint c = a + b;
     assert(c>=a && c>=b);
     return c;
   }
-  function safeNumDigits(uint number) internal returns (uint8) {
+  function safeNumDigits(uint number) pure internal returns (uint8) {
     uint8 digits = 0;
     while (number != 0) {
         number /= 10;

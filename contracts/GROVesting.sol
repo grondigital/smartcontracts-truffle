@@ -37,7 +37,7 @@ contract GROVesting is SafeMath {
         if (stage == _stage) _;
     }
 
-    function GROVesting(address _token, uint256 fundingEndBlockInput) {
+    function GROVesting(address _token, uint256 fundingEndBlockInput) public {
         require(_token != address(0));
         beneficiary = msg.sender;
         fundingEndBlock = fundingEndBlockInput;
@@ -50,14 +50,14 @@ contract GROVesting is SafeMath {
         beneficiary = newBeneficiary;
     }
 
-    function updateFundingEndBlock(uint256 newFundingEndBlock) {
+    function updateFundingEndBlock(uint256 newFundingEndBlock) public {
         require(msg.sender == beneficiary);
         require(block.number < fundingEndBlock);
         require(block.number < newFundingEndBlock);
         fundingEndBlock = newFundingEndBlock;
     }
 
-    function checkBalance() constant returns (uint256 tokenBalance) {
+    function checkBalance() public constant returns (uint256 tokenBalance) {
         return ERC20Token.balanceOf(this);
     }
 

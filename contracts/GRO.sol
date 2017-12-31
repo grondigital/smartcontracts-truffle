@@ -143,10 +143,11 @@ contract GRO is StandardToken {
     }
 
     function require_limited_change (uint256 newNumerator)
-        private
-        only_if_controlWallet
-        require_waited
-        only_if_decrease(newNumerator)
+      private
+      view
+      only_if_controlWallet
+      require_waited
+      only_if_decrease(newNumerator)
     {
         uint256 percentage_diff = 0;
         percentage_diff = safeMul(newNumerator, 100) / currentPrice.numerator;
@@ -235,7 +236,7 @@ contract GRO is StandardToken {
         }
     }
 
-    function competitionCalculation(uint256 icoDuration, uint256 numerator) returns (uint256 newNumerator) {
+    function competitionCalculation(uint256 icoDuration, uint256 numerator) view public returns (uint256 newNumerator) {
         require(competitionEnabled);
         if (safeNumDigits(icoDuration / (competitionBlocks)) == 0) {
             numerator = numerator * 2;
@@ -288,7 +289,7 @@ contract GRO is StandardToken {
     }
 
 
-    function checkWithdrawValue(uint256 amountTokensToWithdraw) constant returns (uint256 etherValue) {
+    function checkWithdrawValue(uint256 amountTokensToWithdraw) public constant returns (uint256 etherValue) {
         require(amountTokensToWithdraw > 0);
         require(balanceOf(msg.sender) >= amountTokensToWithdraw);
         uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.numerator);

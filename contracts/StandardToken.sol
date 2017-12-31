@@ -9,7 +9,7 @@ contract StandardToken is Token, SafeMath {
     uint256 public totalSupply;
 
     // TODO: update tests to expect throw
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2) returns (bool success) {
+    function transfer(address _to, uint256 _value) onlyPayloadSize(2) public returns (bool success) {
         require(_to != address(0));
         require(balances[msg.sender] >= _value && _value > 0);
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
@@ -20,7 +20,7 @@ contract StandardToken is Token, SafeMath {
     }
 
     // TODO: update tests to expect throw
-    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) public returns (bool success) {
         require(_to != address(0));
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
         balances[_from] = safeSub(balances[_from], _value);
@@ -31,7 +31,7 @@ contract StandardToken is Token, SafeMath {
         return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
 
@@ -39,7 +39,7 @@ contract StandardToken is Token, SafeMath {
     //  allowance to zero by calling 'approve(_spender, 0)' if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    function approve(address _spender, uint256 _value) onlyPayloadSize(2) returns (bool success) {
+    function approve(address _spender, uint256 _value) public onlyPayloadSize(2) returns (bool success) {
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
@@ -47,7 +47,7 @@ contract StandardToken is Token, SafeMath {
         return true;
     }
 
-    function changeApproval(address _spender, uint256 _oldValue, uint256 _newValue) onlyPayloadSize(3) returns (bool success) {
+    function changeApproval(address _spender, uint256 _oldValue, uint256 _newValue) public onlyPayloadSize(3) returns (bool success) {
         require(allowed[msg.sender][_spender] == _oldValue);
         allowed[msg.sender][_spender] = _newValue;
         Approval(msg.sender, _spender, _newValue);
@@ -55,7 +55,7 @@ contract StandardToken is Token, SafeMath {
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
       return allowed[_owner][_spender];
     }
 
