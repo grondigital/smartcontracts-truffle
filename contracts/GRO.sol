@@ -236,7 +236,7 @@ contract GRO is StandardToken {
         }
     }
 
-    function competitionCalculation(uint256 icoDuration, uint256 numerator) view public returns (uint256 newNumerator) {
+    function competitionCalculation(uint256 icoDuration, uint256 numerator) public view returns (uint256 newNumerator) {
         require(competitionEnabled);
         if (safeNumDigits(icoDuration / (competitionBlocks)) == 0) {
             numerator = numerator * 2;
