@@ -98,7 +98,7 @@ contract GRO is StandardToken {
         if (msg.sender == controlWallet) _;
     }
     modifier require_waited {
-        require(safeSub(now, waitTime) >= previousUpdateTime);
+      require(safeSub(currentTime(), waitTime) >= previousUpdateTime);
         _;
     }
     modifier only_if_decrease (uint256 newNumerator) {
@@ -118,7 +118,7 @@ contract GRO is StandardToken {
         currentPrice = Price(priceNumeratorInput);
         fundingStartBlock = startBlockInput;
         fundingEndBlock = endBlockInput;
-        previousUpdateTime = now;
+        previousUpdateTime = currentTime();
     }
 
     // METHODS
@@ -138,7 +138,7 @@ contract GRO is StandardToken {
         currentPrice.numerator = newNumerator;
         // maps time to new Price (if not during ICO)
         prices[previousUpdateTime] = currentPrice;
-        previousUpdateTime = now;
+        previousUpdateTime = currentTime();
         PriceUpdate(newNumerator);
     }
 
@@ -177,7 +177,7 @@ contract GRO is StandardToken {
     }
 
     function allocatePresaleTokens(address participant, uint amountTokens) external onlyFundWallet {
-        require(block.number < fundingEndBlock);
+        require(currentBlock() < fundingEndBlock);
         require(participant != address(0));
         whitelist[participant] = true; // automatically whitelist accepted presale
         allocateTokens(participant, amountTokens);
@@ -198,7 +198,7 @@ contract GRO is StandardToken {
         require(!halted);
         require(participant != address(0));
         require(msg.value >= minAmount);
-        require(block.number >= fundingStartBlock && block.number < fundingEndBlock);
+        require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
 	// msg.value in wei -> convert to ether before converting to tokens
         uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / (1 ether);
         allocateTokens(participant, tokensToBuy);
@@ -209,7 +209,7 @@ contract GRO is StandardToken {
 
     // time based on blocknumbers, assuming a blocktime of 15s
     function icoNumeratorPrice() public constant returns (uint256) {
-        uint256 icoDuration = safeSub(block.number, fundingStartBlock);
+        uint256 icoDuration = safeSub(currentBlock(), fundingStartBlock);
         uint256 numerator;
 
         uint256 firstBlockPhase = 80640; // #blocks = 2*7*24*60*60/15 = 80640
@@ -236,6 +236,14 @@ contract GRO is StandardToken {
         }
     }
 
+    function currentBlock() private constant returns(uint256 _currentBlock) {
+      return block.number;
+    }
+
+    function currentTime() private constant returns(uint256 _currentTime) {
+      return now;
+    }      
+
     function competitionCalculation(uint256 icoDuration, uint256 numerator) public view returns (uint256 newNumerator) {
         require(competitionEnabled);
         if (safeNumDigits(icoDuration / (competitionBlocks)) == 0) {
@@ -245,7 +253,7 @@ contract GRO is StandardToken {
     }
 
     function requestWithdrawal(uint256 amountTokensToWithdraw) external isTradeable onlyWhitelist {
-        require(block.number > fundingEndBlock);
+      require(currentBlock() > fundingEndBlock);
         require(amountTokensToWithdraw > 0);
         address participant = msg.sender;
         require(balanceOf(participant) >= amountTokensToWithdraw);
@@ -330,14 +338,14 @@ contract GRO is StandardToken {
     }
 
     function updateFundingStartBlock(uint256 newFundingStartBlock) external onlyFundWallet {
-        require(block.number < fundingStartBlock);
-        require(block.number < newFundingStartBlock);
+      require(currentBlock() < fundingStartBlock);
+        require(currentBlock() < newFundingStartBlock);
         fundingStartBlock = newFundingStartBlock;
     }
 
     function updateFundingEndBlock(uint256 newFundingEndBlock) external onlyFundWallet {
-        require(block.number < fundingEndBlock);
-        require(block.number < newFundingEndBlock);
+        require(currentBlock() < fundingEndBlock);
+        require(currentBlock() < newFundingEndBlock);
         fundingEndBlock = newFundingEndBlock;
     }
 
@@ -349,7 +357,7 @@ contract GRO is StandardToken {
     }
 
     function enableTrading() external onlyFundWallet {
-        require(block.number > fundingEndBlock);
+        require(currentBlock() > fundingEndBlock);
         tradeable = true;
     }
 

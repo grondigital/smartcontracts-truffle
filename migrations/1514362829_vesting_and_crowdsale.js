@@ -6,7 +6,7 @@ module.exports = function(deployer, network, accounts) {
     if (network != "live"){
 	var fundingWallet = accounts[0];
 	var controlWallet = accounts[1];
-	var priceNumerator = 10000; // 1 ETH * priceNumerator = 100000 GRO
+	var priceNumerator = 10000; // 1 ETH * priceNumerator = 10000 GRO
 
 	// #blocks = 6*7*24*60*60/15 = 241920
 	var blocksInSixWeeks = 241920
