@@ -2,7 +2,7 @@ pragma solidity 0.4.18;
 
 import './GRO.sol';
 
-// Used purely for time deoendent tests
+// Used purely for time dependent tests
 contract GROMock is GRO () {
 
   uint256 public _now;
