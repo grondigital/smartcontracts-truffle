@@ -113,6 +113,8 @@ contract GRO is StandardToken {
     }
 
     // Called after deployment
+    // Not all deployment clients support constructor arguments.
+    // This function is provided for maximum compatibility. 
     function initialiseContract(address controlWalletInput, uint256 priceNumeratorInput, uint256 startBlockInput, uint256 endBlockInput) external onlyFundWallet {
       require(controlWalletInput != address(0));
       require(priceNumeratorInput > 0);

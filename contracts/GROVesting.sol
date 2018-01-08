@@ -46,8 +46,8 @@ contract GROVesting is SafeMath {
         beneficiary = msg.sender;
     }
 
-    // Not all deployment frontends support constructor parameters
-    // This function is provded for maximum compatibility. 
+    // Not all deployment clients support constructor arguments.
+    // This function is provided for maximum compatibility. 
     function initialiseContract(address _token, uint256 fundingEndBlockInput) external onlyBeneficiary {
       require(_token != address(0));
       fundingEndBlock = fundingEndBlockInput;
