@@ -8,12 +8,7 @@ contract GROMock is GRO () {
   uint256 public _now;
   uint256 public _block;
 
-  function GROMock (
-		    address controlWalletInput,
-		    uint256 priceNumeratorInput,
-		    uint256 startBlockInput,
-		    uint256 endBlockInput
-		    ) GRO (controlWalletInput, priceNumeratorInput, startBlockInput, endBlockInput) public {
+  function GROMock () GRO () public {
   }
 
   function changeBlock(uint256 _newBlock) public {

@@ -106,19 +106,23 @@ contract GRO is StandardToken {
     }
 
     // CONSTRUCTOR
-
-    function GRO(address controlWalletInput, uint256 priceNumeratorInput, uint256 startBlockInput, uint256 endBlockInput) public {
-        require(controlWalletInput != address(0));
-        require(priceNumeratorInput > 0);
-        require(endBlockInput > startBlockInput);
+    function GRO() public {
         fundWallet = msg.sender;
-        controlWallet = controlWalletInput;
         whitelist[fundWallet] = true;
-        whitelist[controlWallet] = true;
-        currentPrice = Price(priceNumeratorInput);
-        fundingStartBlock = startBlockInput;
-        fundingEndBlock = endBlockInput;
         previousUpdateTime = currentTime();
+    }
+
+    // Called after deployment
+    function initialiseContract(address controlWalletInput, uint256 priceNumeratorInput, uint256 startBlockInput, uint256 endBlockInput) external onlyFundWallet {
+      require(controlWalletInput != address(0));
+      require(priceNumeratorInput > 0);
+      require(endBlockInput > startBlockInput);
+      controlWallet = controlWalletInput;
+      whitelist[controlWallet] = true;
+      currentPrice = Price(priceNumeratorInput);
+      fundingStartBlock = startBlockInput;
+      fundingEndBlock = endBlockInput;
+      previousUpdateTime = currentTime();
     }
 
     // METHODS

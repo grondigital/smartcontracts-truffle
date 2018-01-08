@@ -37,13 +37,23 @@ contract GROVesting is SafeMath {
         if (stage == _stage) _;
     }
 
-    function GROVesting(address _token, uint256 fundingEndBlockInput) public {
-        require(_token != address(0));
-        beneficiary = msg.sender;
-        fundingEndBlock = fundingEndBlockInput;
-        ERC20Token = Token(_token);
+    modifier onlyBeneficiary {
+      require(msg.sender == beneficiary);
+      _;
     }
 
+    function GROVesting() public {
+        beneficiary = msg.sender;
+    }
+
+    // Not all deployment frontends support constructor parameters
+    // This function is provded for maximum compatibility. 
+    function initialiseContract(address _token, uint256 fundingEndBlockInput) external onlyBeneficiary {
+      require(_token != address(0));
+      fundingEndBlock = fundingEndBlockInput;
+      ERC20Token = Token(_token);
+    }
+    
     function changeBeneficiary(address newBeneficiary) external {
         require(newBeneficiary != address(0));
         require(msg.sender == beneficiary);
