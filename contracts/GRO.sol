@@ -205,7 +205,7 @@ contract GRO is StandardToken {
         require(participant != address(0));
         require(msg.value >= minAmount);
         require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
-	// msg.value in wei -> convert to ether before converting to tokens
+	// msg.value in wei - scale to ether after applying price numerator
         uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / (1 ether);
         allocateTokens(participant, tokensToBuy);
         // send ether to fundWallet
