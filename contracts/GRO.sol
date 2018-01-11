@@ -32,11 +32,6 @@ contract GRO is StandardToken, ByteLib {
     bool public halted = false;
     bool public tradeable = false;
 
-    // Competition Enabled
-    // Competition Blocks
-    bool private competitionEnabled = true;
-    uint256 private competitionBlocks = 20;
-
     // -- totalSupply defined in StandardToken
     // -- mapping to token balances done in StandardToken
 
@@ -315,11 +310,6 @@ contract GRO is StandardToken, ByteLib {
         uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.numerator);
         require(this.balance >= withdrawValue);
         return withdrawValue;
-    }
-
-    // allow fundWallet or controlWallet to update Competition Blocks Frequency
-    function updateCompetitionBlocks(uint256 newCompetitionBlocks) external onlyFundWallet {
-        competitionBlocks = newCompetitionBlocks;
     }
 
     // allow fundWallet or controlWallet to add ether to contract
