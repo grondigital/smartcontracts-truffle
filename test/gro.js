@@ -75,12 +75,13 @@ contract('GRO', function(accounts) {
 	    assert.equal(supply, 0);	    
 	});
 	
-	// TODO: How are bonus tokens amounts determined for the pre-sale period?
+
 	it('allocates pre-sale tokens when using the fundWallet', async function() {
 	    // For a max supply of 950M - 570M pub, 380M dev allocation	    
 	    let amountTokens = 285000000; // 50% the amount of public tokens
 	    let expectedDevTeamAllocation = 190000000; // 50% of dev allocation expected to be allocated
 	    let expectedTotalSupply = amountTokens + expectedDevTeamAllocation;
+	    let randomTxnHash = 'randomTxnHash';
 
 	    const gro = await GRO.deployed();
 	    await gro.setVestingContract(vestingContractAddress);
@@ -95,7 +96,7 @@ contract('GRO', function(accounts) {
 	    assert.equal(supply, 0);
 
 	    // called from accounts[0]
-	    await gro.allocatePresaleTokens(preSaleAllocationAddress, amountTokens);
+	    await gro.allocatePresaleTokens(preSaleAllocationAddress, preSaleAllocationAddress, amountTokens, randomTxnHash);
 	    let status = await gro.whitelist(preSaleAllocationAddress);
 	    assert.equal(status, true, "Participant should be whitelisted");
 
@@ -110,6 +111,30 @@ contract('GRO', function(accounts) {
 	    
 	});
 
+	it('should allocate a 10% bonus amount', async function() {
+	    let amountTokens = 550;
+	    let expectedAmount = 605;
+	    let participant = '0x4bd6d687f98ecaa499da4c24c02dba51b04e04c6';
+	    let txnHash = '0x4somerandomhash';
+
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+	    
+	    // initial balances
+	    let participantBalance = await gro.balanceOf(participant);	    
+	    assert.equal(participantBalance.toNumber(), 0);
+
+	    // note that we can pass participant as a string for both
+	    // the address and byte params in JS
+	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
+	    let status = await gro.whitelist(participant);
+	    assert.equal(status, true, "Participant should be whitelisted");
+
+	    // post transaction balances
+	    participantBalance = await gro.balanceOf(participant);
+	    
+	    assert.equal(participantBalance.toNumber(), expectedAmount, "Participant balance should be updated with bonus of 10%");	    	    
+	});
     });
 
     contract('verifyParticipant', function() {
@@ -160,4 +185,5 @@ contract('GRO', function(accounts) {
 	    // assert.equal(1, updatedBalance - initialBalance);
 	});
     });
+
 });

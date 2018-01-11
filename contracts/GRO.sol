@@ -1,8 +1,9 @@
 pragma solidity 0.4.18;
 
+import './ByteLib.sol';
 import './StandardToken.sol';
 
-contract GRO is StandardToken {
+contract GRO is StandardToken, ByteLib {
     // FIELDS
     string public name = "Gron Digital";
     string public symbol = "GRO";
@@ -65,6 +66,7 @@ contract GRO is StandardToken {
 
     event Buy(address indexed participant, address indexed beneficiary, uint256 weiValue, uint256 amountTokens);
     event AllocatePresale(address indexed participant, uint256 amountTokens);
+    event BonusTokens(address indexed participant, byte addr, byte hash);	
     event Whitelist(address indexed participant);
     event PriceUpdate(uint256 numerator);
     event AddLiquidity(uint256 ethAmount);
@@ -181,14 +183,32 @@ contract GRO is StandardToken {
         balances[participant] = safeAdd(balances[participant], amountTokens);
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
     }
+    
+    function allocatePresaleTokens(
+			       address participant_address,
+			       string participant_str,
+			       uint256 amountTokens,
+			       string txnHash
+			       )
+      external onlyFundWallet {
 
-    function allocatePresaleTokens(address participant, uint amountTokens) external onlyFundWallet {
-        require(currentBlock() < fundingEndBlock);
-        require(participant != address(0));
-        whitelist[participant] = true; // automatically whitelist accepted presale
-        allocateTokens(participant, amountTokens);
-        Whitelist(participant);
-        AllocatePresale(participant, amountTokens);
+      require(currentBlock() < fundingEndBlock);
+      require(participant_address != address(0));
+      //require(bytesToAddress(participant_bytes) == participant_address);
+     
+      uint256 bonusTokens = 0;
+      uint256 totalTokens = amountTokens;
+
+      if (firstDigit(txnHash) == firstDigit(participant_str)) {
+	  // Calculate 10% bonus
+	  bonusTokens = safeMul(totalTokens, 10) / 100;
+	  totalTokens = safeAdd(totalTokens, bonusTokens);
+      }
+
+        whitelist[participant_address] = true;
+        allocateTokens(participant_address, totalTokens);
+        Whitelist(participant_address);
+        AllocatePresale(participant_address, totalTokens);
     }
 
     function verifyParticipant(address participant) external onlyManagingWallets {
@@ -225,20 +245,16 @@ contract GRO is StandardToken {
 
         if (icoDuration < firstBlockPhase ) {
             numerator = 13000;
-            numerator = competitionCalculation(icoDuration, numerator);
-            return numerator;
+	    return numerator;
         } else if (icoDuration < secondBlockPhase ) { 
             numerator = 12000;
-            numerator = competitionCalculation(icoDuration, numerator);
-            return numerator;
+	    return numerator;
         } else if (icoDuration < thirdBlockPhase ) { 
             numerator = 11000;
-            numerator = competitionCalculation(icoDuration, numerator);
-            return numerator;
+	    return numerator;
         } else {
             numerator = 10000;
-            numerator = competitionCalculation(icoDuration, numerator);
-            return numerator;
+	    return numerator;
         }
     }
 
@@ -249,14 +265,6 @@ contract GRO is StandardToken {
     function currentTime() private constant returns(uint256 _currentTime) {
       return now;
     }      
-
-    function competitionCalculation(uint256 icoDuration, uint256 numerator) public view returns (uint256 newNumerator) {
-        require(competitionEnabled);
-        if (safeNumDigits(icoDuration / (competitionBlocks)) == 0) {
-            numerator = numerator * 2;
-        }
-        return numerator;
-    }
 
     function requestWithdrawal(uint256 amountTokensToWithdraw) external isTradeable onlyWhitelist {
       require(currentBlock() > fundingEndBlock);
