@@ -8,7 +8,6 @@ contract StandardToken is Token, SafeMath {
 
     uint256 public totalSupply;
 
-    // TODO: update tests to expect throw
     function transfer(address _to, uint256 _value) onlyPayloadSize(2) public returns (bool success) {
         require(_to != address(0));
         require(balances[msg.sender] >= _value && _value > 0);
@@ -19,7 +18,6 @@ contract StandardToken is Token, SafeMath {
         return true;
     }
 
-    // TODO: update tests to expect throw
     function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) public returns (bool success) {
         require(_to != address(0));
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);

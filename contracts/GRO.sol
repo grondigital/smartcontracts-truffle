@@ -65,8 +65,7 @@ contract GRO is StandardToken, ByteLib {
     // EVENTS
 
     event Buy(address indexed participant, address indexed beneficiary, uint256 weiValue, uint256 amountTokens);
-    event AllocatePresale(address indexed participant, uint256 amountTokens);
-    event BonusTokens(address indexed participant, byte addr, byte hash);	
+    event AllocatePresale(address indexed participant, uint256 amountTokens);    
     event Whitelist(address indexed participant);
     event PriceUpdate(uint256 numerator);
     event AddLiquidity(uint256 ethAmount);
@@ -194,7 +193,6 @@ contract GRO is StandardToken, ByteLib {
 
       require(currentBlock() < fundingEndBlock);
       require(participant_address != address(0));
-      //require(bytesToAddress(participant_bytes) == participant_address);
      
       uint256 bonusTokens = 0;
       uint256 totalTokens = amountTokens;
