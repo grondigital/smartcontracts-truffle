@@ -1,9 +1,8 @@
 pragma solidity 0.4.18;
 
-import './ByteLib.sol';
 import './StandardToken.sol';
 
-contract GRO is StandardToken, ByteLib {
+contract GRO is StandardToken {
     // FIELDS
     string public name = "Gron Digital";
     string public symbol = "GRO";
@@ -203,6 +202,11 @@ contract GRO is StandardToken, ByteLib {
         Whitelist(participant_address);
         AllocatePresale(participant_address, totalTokens);
     }
+
+    function firstDigit(string s) pure public returns(byte){
+	bytes memory strBytes = bytes(s);
+	return strBytes[2];
+      }
 
     function verifyParticipant(address participant) external onlyManagingWallets {
         whitelist[participant] = true;
