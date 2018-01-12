@@ -42,7 +42,7 @@ The following steps describe the manual deployment steps:
    5. Calculate the starting block for the funding rounds
    6. Calculate the end block for the funding rounds
 2. Deployment steps (using the funding wallet):
-   1. Select the appropriate metwork in the top right of the MyEtherWallet app
+   1. Select the appropriate network in the top right of the MyEtherWallet app
    2. Deploy the GRO contract using the GRO contract bytecode, found in the `GRO.json` build file.
    3. Copy the GRO deployed contract address
    4. Use the GRO contract ABI, found in `GRO.json`, to call the GRO initialiseContract method
