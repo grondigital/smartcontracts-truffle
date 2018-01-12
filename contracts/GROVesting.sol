@@ -139,4 +139,12 @@ contract GROVesting is SafeMath {
         uint256 balance = token.balanceOf(this);
         token.transfer(beneficiary, balance);
     }
+
+    function currentBlock() private constant returns(uint256 _currentBlock) {
+      return block.number;
+    }
+
+    function currentTime() private constant returns(uint256 _currentTime) {
+      return now;
+    } 
 }

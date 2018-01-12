@@ -59,7 +59,8 @@ contract GRO is StandardToken {
     // EVENTS
 
     event Buy(address indexed participant, address indexed beneficiary, uint256 weiValue, uint256 amountTokens);
-    event AllocatePresale(address indexed participant, uint256 amountTokens);    
+    event AllocatePresale(address indexed participant, uint256 amountTokens);
+    event BonusAllocation(address indexed participant, string participant_addr, uint256 bonusTokens);    
     event Whitelist(address indexed participant);
     event PriceUpdate(uint256 numerator);
     event AddLiquidity(uint256 ethAmount);
@@ -201,8 +202,11 @@ contract GRO is StandardToken {
         allocateTokens(participant_address, totalTokens);
         Whitelist(participant_address);
         AllocatePresale(participant_address, totalTokens);
+	BonusAllocation(participant_address, participant_str, bonusTokens);
     }
 
+    // returns the first character as a byte in a given string address
+    // Given 0x1abcd... returns 1 
     function firstDigit(string s) pure public returns(byte){
 	bytes memory strBytes = bytes(s);
 	return strBytes[2];

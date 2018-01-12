@@ -7,7 +7,6 @@ contract('GRO', function(accounts) {
     var vestingContractAddress = accounts[2];
     var preSaleAllocationAddress = accounts[3];
     var randomAddress = accounts[4];
-    var priceNumeratorInput = 1;
     var expectedTokenCap = 950000000 * Math.pow(10, 18);
 
     contract('Construction, getters, setters', function(accounts) {
@@ -25,6 +24,14 @@ contract('GRO', function(accounts) {
 
 	    assert.equal(expectedTokenCap, cap);
 	});
+
+	it("has the correct default GRO price", async function() {
+	    let expectedPrice = 10000;
+	    let gro = await GRO.deployed();	   
+	    let price = await gro.currentPrice();
+
+	    assert.equal(price.toNumber(), expectedPrice);
+	});
 	
 
 	it("updates the price", async function() {
@@ -37,6 +44,37 @@ contract('GRO', function(accounts) {
 	    assert.equal(price.toNumber(), expectedPrice);
 	});
     });
+
+    contract('firstDigit', function(accounts) {
+	
+	it("it should find the first digit the hex string", async function() {
+	    let gro = await GRO.deployed();
+	    let hex1 = "0x4bd6d687f98ecaa499da4c24c02dba51b04e04c6";
+	    let hex2 = "0x12d6d687f98ecaa499da4c24c02dba51b04e04c6";
+	    let hex3 = "0x00d6d687f98ecaa499da4c24c02dba51b04e04c6";
+	    let hex4 = "0x01d6d687f98ecaa499da4c24c02dba51b04e04c6";
+	    let hex5 = "0xrandom";
+	    let hex6 = "invalid";
+	    
+	    let result = await gro.firstDigit.call(hex1);
+	    assert.equal(String.fromCharCode(result), '4');
+
+	    result = await gro.firstDigit.call(hex2);
+	    assert.equal(String.fromCharCode(result), '1');
+
+	    result = await gro.firstDigit.call(hex3);
+	    assert.equal(String.fromCharCode(result), '0');
+
+	    result = await gro.firstDigit.call(hex4);
+	    assert.equal(String.fromCharCode(result), '0');
+
+	    result = await gro.firstDigit.call(hex5);
+	    assert.equal(String.fromCharCode(result), 'r');
+
+	    result = await gro.firstDigit.call(hex6);
+	    assert.equal(String.fromCharCode(result), 'v');
+	});
+    });
     
     // Redeploy contracts to network
     contract('allocatePresaletokens', function(accounts) {
@@ -44,7 +82,7 @@ contract('GRO', function(accounts) {
 	it("starts with 0 tokens issued", async function() {
 	    let gro = await GRO.deployed();
 	    let supply = await gro.totalSupply();
-
+	    
 	    assert.equal(supply, 0);
 
 	    await gro.setVestingContract(vestingContractAddress);
@@ -135,6 +173,32 @@ contract('GRO', function(accounts) {
 	    
 	    assert.equal(participantBalance.toNumber(), expectedAmount, "Participant balance should be updated with bonus of 10%");	    	    
 	});
+
+
+	it('should note allocate a 10% bonus amount', async function() {
+	    let amountTokens = 550;
+	    let expectedAmount = 550;
+	    let participant = '0x1bd6d687f98ecaa499da4c24c02dba51b04e04c6';
+	    let txnHash = '0x3somerandomhash';
+
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+	    
+	    // initial balances
+	    let participantBalance = await gro.balanceOf(participant);	    
+	    assert.equal(participantBalance.toNumber(), 0);
+
+	    // note that we can pass participant as a string for both
+	    // the address and byte params in JS
+	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
+	    let status = await gro.whitelist(participant);
+	    assert.equal(status, true, "Participant should be whitelisted");
+
+	    // post transaction balances
+	    participantBalance = await gro.balanceOf(participant);
+	    
+	    assert.equal(participantBalance.toNumber(), expectedAmount, "Participant balance should be updated with bonus of 10%");	    	    
+	});
     });
 
     contract('verifyParticipant', function() {
@@ -183,6 +247,39 @@ contract('GRO', function(accounts) {
 	    let updatedBalance = web3.fromWei(web3.eth.getBalance(expectedFundingWallet));
 	    // TODO: Investigate why updated - initial ~ 0.993... and not 1 ETH
 	    // assert.equal(1, updatedBalance - initialBalance);
+	});
+    });
+
+
+    contract('withDraw', function(accounts) {
+	
+	it("it should fail without a withdraw request", async function() {
+	    let amountTokens = 100;
+	    let expectedBalance = 100;
+	    let participant = randomAddress;
+	    let txnHash = '0xsomerandomhash';
+
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+	    
+	    // initial balances
+	    let participantBalance = await gro.balanceOf(participant);	    
+	    assert.equal(participantBalance.toNumber(), 0);
+	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
+	    // post transaction balances
+	    participantBalance = await gro.balanceOf(participant);	    
+	    assert.equal(participantBalance.toNumber(), expectedBalance);
+
+	    try {
+		await gro.withDraw();
+	    }
+	    catch (error) {
+		//error thrown - transaction reverted
+	    }
+
+	    // balance should remain unchanged
+	    participantBalance = await gro.balanceOf(participant);	    
+	    assert.equal(participantBalance.toNumber(), expectedBalance);
 	});
     });
 

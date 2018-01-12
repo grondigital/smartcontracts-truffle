@@ -1,14 +1,14 @@
 pragma solidity 0.4.18;
 
-import './GRO.sol';
+import './GROVesting.sol';
 
 // Used purely for time dependent tests and is not deployed to live network
-contract GROMock is GRO () {
+contract GROVestingMock is GROVesting () {
 
   uint256 public _now;
   uint256 public _block;
 
-  function GROMock (uint256 defaultTime, uint256 defaultBlock) GRO () public {
+  function GROVestingMock (uint256 defaultTime, uint256 defaultBlock) GROVesting () public {
     _now = defaultTime;
     _block = defaultBlock;
   }

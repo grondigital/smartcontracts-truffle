@@ -20,7 +20,9 @@ module.exports = function(deployer, network, accounts) {
 	    await deployer.deploy(GROVesting);
 	    let vestingInstance = await GROVesting.deployed();
 	    await vestingInstance.initialiseContract(GRO.address, endBlockInput);
-	    
+
+	    await groInstance.setVestingContract(GROVesting.address);	    
 	});
-    }    
-};
+    }
+}
+ 
