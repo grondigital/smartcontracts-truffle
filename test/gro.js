@@ -245,7 +245,7 @@ contract('GRO', function(accounts) {
 
 	    // there should be a transfer of ether to the fundWallet
 	    let updatedBalance = web3.fromWei(web3.eth.getBalance(expectedFundingWallet));
-	    assert.atLeast(0.9, updatedBalance - initialBalance); // transaction costs
+	    assert.isAtLeast(updatedBalance - initialBalance, 0.9); // transaction costs
 	});
     });
 
