@@ -65,6 +65,7 @@ contract('GRO', function(accounts) {
 	    let txnHash = '0xsomerandomhash';
     
 	    const gro = await GRO.deployed();
+	    
 	    const vestingContract = await gro.vestingContract();
 
 	    // initial balances

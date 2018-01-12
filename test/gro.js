@@ -175,7 +175,7 @@ contract('GRO', function(accounts) {
 	});
 
 
-	it('should note allocate a 10% bonus amount', async function() {
+	it('should not allocate a 10% bonus amount', async function() {
 	    let amountTokens = 550;
 	    let expectedAmount = 550;
 	    let participant = '0x1bd6d687f98ecaa499da4c24c02dba51b04e04c6';
@@ -245,8 +245,7 @@ contract('GRO', function(accounts) {
 
 	    // there should be a transfer of ether to the fundWallet
 	    let updatedBalance = web3.fromWei(web3.eth.getBalance(expectedFundingWallet));
-	    // TODO: Investigate why updated - initial ~ 0.993... and not 1 ETH
-	    // assert.equal(1, updatedBalance - initialBalance);
+	    assert.atLeast(0.9, updatedBalance - initialBalance); // transaction costs
 	});
     });
 
