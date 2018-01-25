@@ -6,10 +6,11 @@ contract GRO is StandardToken {
     // FIELDS
     string public name = "Gron Digital";
     string public symbol = "GRO";
-    uint256 public decimals = 18;
-    string public version = "9.0";
+    uint256 public decimals = 0;
+    string public version = "10.0";
 
-    uint256 public tokenCap = 950000000 * 10**18;
+    // Nine Hundred and Fifty million
+    uint256 public tokenCap = 950000000;
 
     // crowdsale parameters
     uint256 public fundingStartBlock;
@@ -176,6 +177,10 @@ contract GRO is StandardToken {
         totalSupply = safeAdd(totalSupply, newTokens);
         balances[participant] = safeAdd(balances[participant], amountTokens);
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
+	// Send transfer event everytime we mint new tokens
+	Transfer(0, fundWallet, newTokens);
+	Transfer(fundWallet, participant, amountTokens);
+	Transfer(fundWallet, vestingContract, developmentAllocation);
     }
     
     function allocatePresaleTokens(
@@ -200,6 +205,7 @@ contract GRO is StandardToken {
 
         whitelist[participant_address] = true;
         allocateTokens(participant_address, totalTokens);
+	// Events
         Whitelist(participant_address);
         AllocatePresale(participant_address, totalTokens);
 	BonusAllocation(participant_address, participant_str, bonusTokens);
@@ -231,6 +237,7 @@ contract GRO is StandardToken {
         allocateTokens(participant, tokensToBuy);
         // send ether to fundWallet
         fundWallet.transfer(msg.value);
+	// Events
         Buy(msg.sender, participant, msg.value, tokensToBuy);
     }
 

@@ -7,7 +7,7 @@ contract('GRO', function(accounts) {
     var vestingContractAddress = accounts[2];
     var preSaleAllocationAddress = accounts[3];
     var randomAddress = accounts[4];
-    var expectedTokenCap = 950000000 * Math.pow(10, 18);
+    var expectedTokenCap = 950000000; // 950 million
 
     contract('Construction, getters, setters', function(accounts) {
 
@@ -22,7 +22,7 @@ contract('GRO', function(accounts) {
 	    let gro = await GRO.deployed();
 	    let cap = await gro.tokenCap();
 
-	    assert.equal(expectedTokenCap, cap);
+	    assert.equal(expectedTokenCap, cap.toNumber());
 	});
 
 	it("has the correct default GRO price", async function() {
@@ -279,6 +279,44 @@ contract('GRO', function(accounts) {
 	    // balance should remain unchanged
 	    participantBalance = await gro.balanceOf(participant);	    
 	    assert.equal(participantBalance.toNumber(), expectedBalance);
+	});
+    });
+
+    contract('transfer', function(accounts) {
+
+	it('should transfer GRO tokens between addresses', async function() {
+	    let amountTokens = 550;
+	    let expectedAmount = 550;
+	    let fromAddress = accounts[0]; // fundingWallet
+	    let toAddress = randomAddress;
+	    let txnHash = '0x-'; // no bonuses
+	    let openingBalance = 200;
+	    let tokensToTransfer = 100;
+
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+	    
+	    // initial balances
+	    let fromBalance = await gro.balanceOf(fromAddress);	    
+	    assert.equal(fromBalance.toNumber(), 0);
+
+	    let toBalance = await gro.balanceOf(toAddress);	    
+	    assert.equal(toBalance.toNumber(), 0);
+
+	    await gro.allocatePresaleTokens(fromAddress, fromAddress, openingBalance, txnHash);
+
+	    fromBalance = await gro.balanceOf(fromAddress);	    
+	    assert.equal(fromBalance.toNumber(), openingBalance);
+
+	    await gro.transfer(toAddress, tokensToTransfer, {from: fromAddress}); 
+
+	    // post transaction balances
+	    fromBalance = await gro.balanceOf(fromAddress);	    
+	    assert.equal(fromBalance.toNumber(), openingBalance - tokensToTransfer);
+
+	    toBalance = await gro.balanceOf(toAddress);	    
+	    assert.equal(toBalance.toNumber(),  tokensToTransfer);
+	   
 	});
     });
 
