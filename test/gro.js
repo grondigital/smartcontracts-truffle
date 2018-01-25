@@ -319,5 +319,4 @@ contract('GRO', function(accounts) {
 	   
 	});
     });
-
 });

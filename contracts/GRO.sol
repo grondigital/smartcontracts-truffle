@@ -378,12 +378,6 @@ contract GRO is StandardToken {
         tradeable = true;
     }
 
-    // fallback function
-    function() payable public {
-        require(tx.origin == msg.sender);
-        buyTo(msg.sender);
-    }
-
     function claimTokens(address _token) external onlyFundWallet {
         require(_token != address(0));
         Token token = Token(_token);
