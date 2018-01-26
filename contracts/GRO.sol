@@ -179,9 +179,9 @@ contract GRO is StandardToken {
         balances[participant] = safeAdd(balances[participant], amountTokens);
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
 
-	Mint(participant, amountTokens);
-	Transfer(address(0), participant, amountTokens);
-	Transfer(address(0), vestingContract, developmentAllocation);
+	Mint(fundWallet, newTokens);
+	Transfer(fundWallet, participant, amountTokens);
+	Transfer(fundWallet, vestingContract, developmentAllocation);
     }
 
     // amountTokens is not supplied in subunits. (without 18 0's)
@@ -230,19 +230,22 @@ contract GRO is StandardToken {
     }
 
     function buyTo(address participant) public payable onlyWhitelist {
-        require(!halted);
-        require(participant != address(0));
-        require(msg.value >= minAmount);
-        require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
-	// msg.value in wei - scale to GRO
-        uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator);
-	// add lottery amount of tokens
-	tokensToBuy = safeAdd(tokensToBuy, blockLottery(tokensToBuy));
-        mint(participant, tokensToBuy);
-        // send ether to fundWallet
-        fundWallet.transfer(msg.value);
-	// Events
-        Buy(msg.sender, participant, msg.value, tokensToBuy);
+      require(!halted);
+      require(participant != address(0));
+      require(msg.value >= minAmount);
+      require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
+      // msg.value in wei - scale to GRO
+      uint256 baseAmountTokens = safeMul(msg.value, currentPrice.numerator);
+      // calc lottery amount excluding potential ico bonus
+      uint256 lotteryAmount = blockLottery(baseAmountTokens);
+      uint256 icoAmount = safeMul(msg.value, icoNumeratorPrice());
+
+      uint256 tokensToBuy = safeAdd(icoAmount, lotteryAmount);
+      mint(participant, tokensToBuy);
+      // send ether to fundWallet
+      fundWallet.transfer(msg.value);
+      // Events
+      Buy(msg.sender, participant, msg.value, tokensToBuy);
     }
 
     // time based on blocknumbers, assuming a blocktime of 15s
@@ -309,13 +312,15 @@ contract GRO is StandardToken {
         // obtain the next price that was set after the request
         Price price = prices[requestTime];
         require(price.numerator > 0); // price must have been set
-        uint256 withdrawValue = safeMul(tokens, price.numerator);
+        uint256 withdrawValue = tokens / price.numerator;
         // if contract ethbal > then send + transfer tokens to fundWallet, otherwise give tokens back
         withdrawals[participant].tokens = 0;
-        if (this.balance >= withdrawValue)
+        if (this.balance >= withdrawValue) {
             enact_withdrawal_greater_equal(participant, withdrawValue, tokens);
-        else
+	}
+        else {
             enact_withdrawal_less(participant, withdrawValue, tokens);
+	}
     }
 
     function enact_withdrawal_greater_equal(address participant, uint256 withdrawValue, uint256 tokens)
