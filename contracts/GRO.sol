@@ -6,11 +6,11 @@ contract GRO is StandardToken {
     // FIELDS
     string public name = "Gron Digital";
     string public symbol = "GRO";
-    uint256 public decimals = 0;
+    uint256 public decimals = 18;
     string public version = "10.0";
 
-    // Nine Hundred and Fifty million
-    uint256 public tokenCap = 950000000;
+    // Nine Hundred and Fifty million with support for 18 decimals
+    uint256 public tokenCap = 950000000 * 10**18;
 
     // crowdsale parameters
     uint256 public fundingStartBlock;
@@ -169,8 +169,8 @@ contract GRO is StandardToken {
 	// Therefore we are multiplying out by 1000000... for
 	// precision. This allows ratios values up to 0.0000x or 0.00x percent
 	uint256 precision = 10**18;
-	uint256 allocationRatio = safeMul(amountTokens, precision) / 570000000;
-        uint256 developmentAllocation = safeMul(allocationRatio, 380000000) / precision;
+	uint256 allocationRatio = safeMul(amountTokens, precision) / safeMul(570000000, precision);
+        uint256 developmentAllocation = safeMul(allocationRatio, safeMul(380000000, precision)) / precision;
         // check that token cap is not exceeded
         uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
         require(safeAdd(totalSupply, newTokens) <= tokenCap);
@@ -183,7 +183,8 @@ contract GRO is StandardToken {
 	Transfer(address(0), participant, amountTokens);
 	Transfer(address(0), vestingContract, developmentAllocation);
     }
-    
+
+    // amountTokens is not supplied in subunits. (without 18 0's)
     function allocatePresaleTokens(
 			       address participant_address,
 			       string participant_str,
@@ -196,7 +197,7 @@ contract GRO is StandardToken {
       require(participant_address != address(0));
      
       uint256 bonusTokens = 0;
-      uint256 totalTokens = amountTokens;
+      uint256 totalTokens = safeMul(amountTokens, 10**18); // scale to subunit
 
       if (firstDigit(txnHash) == firstDigit(participant_str)) {
 	  // Calculate 10% bonus
@@ -233,8 +234,8 @@ contract GRO is StandardToken {
         require(participant != address(0));
         require(msg.value >= minAmount);
         require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
-	// msg.value in wei - scale to ether after applying price numerator
-        uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / (1 ether);
+	// msg.value in wei - scale to GRO
+        uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator);
 	// add lottery amount of tokens
 	tokensToBuy = safeAdd(tokensToBuy, blockLottery(tokensToBuy));
         mint(participant, tokensToBuy);

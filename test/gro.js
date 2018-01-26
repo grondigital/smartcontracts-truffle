@@ -8,7 +8,8 @@ contract('GRO', function(accounts) {
     var preSaleAllocationAddress = accounts[3];
     var randomAddress = accounts[4];
     var expectedTokenCap = 950000000; // 950 million
-
+    const precision = Math.pow(10,18); // decimal places
+    
     contract('Construction, getters, setters', function(accounts) {
 
 	it('returns the correct fundWallet address', async function(){
@@ -22,7 +23,7 @@ contract('GRO', function(accounts) {
 	    let gro = await GRO.deployed();
 	    let cap = await gro.tokenCap();
 
-	    assert.equal(expectedTokenCap, cap.toNumber());
+	    assert.equal(expectedTokenCap * precision, cap.toNumber());
 	});
 
 	it("has the correct default GRO price", async function() {
@@ -143,15 +144,15 @@ contract('GRO', function(accounts) {
 	    participantBalance = await gro.balanceOf(preSaleAllocationAddress);
 	    supply = await gro.totalSupply();
 	    
-	    assert.equal(participantBalance.toNumber(), amountTokens, "Participant balance should be updated");	    
-	    assert.equal(devBalance.toNumber(), expectedDevTeamAllocation, "Dev team should receive allocation amount");
-	    assert.equal(supply.toNumber(), expectedTotalSupply, "Total supply should be updated with both allocations");
+	    assert.equal(participantBalance.toNumber(), amountTokens * precision, "Participant balance should be updated");	    
+	    assert.equal(devBalance.toNumber(), expectedDevTeamAllocation * precision, "Dev team should receive allocation amount");
+	    assert.equal(supply.toNumber(), expectedTotalSupply * precision, "Total supply should be updated with both allocations");
 	    
 	});
 
 	it('should allocate a 10% bonus amount', async function() {
 	    let amountTokens = 550;
-	    let expectedAmount = 605;
+	    let expectedAmount = 605 * precision;
 	    let participant = '0x4bd6d687f98ecaa499da4c24c02dba51b04e04c6';
 	    let txnHash = '0x4somerandomhash';
 
@@ -177,7 +178,7 @@ contract('GRO', function(accounts) {
 
 	it('should not allocate a 10% bonus amount', async function() {
 	    let amountTokens = 550;
-	    let expectedAmount = 550;
+	    let expectedAmount = 550 * precision;
 	    let participant = '0x1bd6d687f98ecaa499da4c24c02dba51b04e04c6';
 	    let txnHash = '0x3somerandomhash';
 
@@ -224,12 +225,12 @@ contract('GRO', function(accounts) {
 	    
 	    let price = await gro.currentPrice();
 	    // GRO contract stores balances in GRO
-	    let balanceInGro = await gro.balanceOf(randomAddress);
+	    let balanceInGro = (await gro.balanceOf(randomAddress)).toNumber() / precision;
 	    let balanceInEther = balanceInGro / 10000; // 1 ETH = 10000 GRO
 	    
 	    assert.equal(price.toNumber(), 10000, "Price should be GRO numerator value");
 	    assert.equal(balanceInEther, 0.55, "Ether  should match amount sent in buy command");
-	    assert.equal(balanceInGro.toNumber(), 5500, "Ether to GRO conversion");
+	    assert.equal(balanceInGro, 5500, "Ether to GRO conversion");
 	});
 
 	it('should transfer the amount of ether sent to the fundWallet address', async function(){
@@ -254,7 +255,7 @@ contract('GRO', function(accounts) {
 	
 	it("it should fail without a withdraw request", async function() {
 	    let amountTokens = 100;
-	    let expectedBalance = 100;
+	    let expectedBalance = 100 * precision;
 	    let participant = randomAddress;
 	    let txnHash = '0xsomerandomhash';
 
@@ -306,16 +307,17 @@ contract('GRO', function(accounts) {
 	    await gro.allocatePresaleTokens(fromAddress, fromAddress, openingBalance, txnHash);
 
 	    fromBalance = await gro.balanceOf(fromAddress);	    
-	    assert.equal(fromBalance.toNumber(), openingBalance);
+	    assert.equal(fromBalance.toNumber(), openingBalance * precision);
 
-	    await gro.transfer(toAddress, tokensToTransfer, {from: fromAddress}); 
+	    await gro.transfer(toAddress, tokensToTransfer * precision, {from: fromAddress}); 
 
 	    // post transaction balances
-	    fromBalance = await gro.balanceOf(fromAddress);	    
-	    assert.equal(fromBalance.toNumber(), openingBalance - tokensToTransfer);
+	    fromBalance = await gro.balanceOf(fromAddress);
+
+	    assert.equal(fromBalance.toNumber(), (openingBalance - tokensToTransfer) * precision);
 
 	    toBalance = await gro.balanceOf(toAddress);	    
-	    assert.equal(toBalance.toNumber(),  tokensToTransfer);
+	    assert.equal(toBalance.toNumber(),  tokensToTransfer * precision);
 	   
 	});
     });
