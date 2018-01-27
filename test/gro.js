@@ -301,4 +301,22 @@ contract('GRO', function(accounts) {
 	   
 	});
     });
+    	    
+    contract('changeMinAmount', function() {
+	it("updates the minimum purchase amount in wei", async function(){
+	    let wei = web3.toWei(0.0005, "ether"); 
+	    let defaultMinWei = web3.toWei(0.05, "ether");
+	    
+	    let gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+
+	    let minAmount = await gro.minAmount();
+	    assert(minAmount.toNumber(), defaultMinWei);
+
+	    await gro.changeMinAmount(wei);
+
+	    minAmount = await gro.minAmount();
+	    assert(minAmount.toNumber(), wei);
+	});
+    });	    
 });

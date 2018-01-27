@@ -148,6 +148,28 @@ contract('GRO', function(accounts) {
 	    assert.equal(fundingWalletBalance.toNumber(), 3000 * precision);
 	    
 	});
+   });
+
+       contract('checkWithDrawValue', function(accounts) {
+	
+	it("it should return the ether value of a specified token amount", async function() {
+	    let amountTokens = 10000;
+	    let expectedBalance = 1 * precision;
+	    let participant = randomAddress;
+	    let txnHash = "0x-"; // no bonus	    
+	    let wei = web3.toWei(5, "ether");
+	    
+	    const gro = await GRO.deployed();
+	    await gro.setVestingContract(vestingContractAddress);
+
+	    await gro.verifyParticipant(participant);
+	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
+	    // initial balances
+	    await gro.addLiquidity({value: wei});
+	    let withDrawValue = await gro.checkWithdrawValue(10000 * precision, {from: participant});
+	    
+	    assert.equal(withDrawValue.toNumber(), 1 * precision); // ether amount	    
+	});
     });
     
     contract('buy', function() {
@@ -183,6 +205,8 @@ contract('GRO', function(accounts) {
 
 	    let gro = await GRO.deployed();
 	    await gro.setVestingContract(vestingContractAddress);
+
+	    //await gro.changeMinAmount(wei);
 
 	    // update the funding start and end blocks with convenient numbers
 	    await gro.changeBlock(1);
