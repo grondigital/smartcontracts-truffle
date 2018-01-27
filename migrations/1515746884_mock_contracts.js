@@ -14,7 +14,8 @@ module.exports = function(deployer, network, accounts) {
 
 	// #blocks = 6*7*24*60*60/15 = 241920
 	var blocksInSixWeeks = 241920;
-	var startingBlockInput = web3.eth.blockNumber; // current block number
+	var blocksInTwoWeeks = 80640;
+	var startingBlockInput = web3.eth.blockNumber + blocksInTwoWeeks; // current block number
 	var endBlockInput = startingBlockInput + blocksInSixWeeks; // TODO: confirm block values
 	
 	return deployer.deploy(GROMock, _now, _currentBlock).then(async function (){

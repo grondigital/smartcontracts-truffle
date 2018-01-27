@@ -137,8 +137,8 @@ contract('GRO', function(accounts) {
 	    // called from accounts[0]
 	    await gro.allocatePresaleTokens(preSaleAllocationAddress, preSaleAllocationAddress, amountTokens, randomTxnHash);
 	    let status = await gro.whitelist(preSaleAllocationAddress);
-	    assert.equal(status, true, "Participant should be whitelisted");
-
+	    assert.equal(status, false, "Participant should not be whitelisted");
+	    
 	    // post transaction balances
 	    devBalance = await gro.balanceOf(vestingContractAddress);
 	    participantBalance = await gro.balanceOf(preSaleAllocationAddress);
@@ -167,7 +167,7 @@ contract('GRO', function(accounts) {
 	    // the address and byte params in JS
 	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
 	    let status = await gro.whitelist(participant);
-	    assert.equal(status, true, "Participant should be whitelisted");
+	    assert.equal(status, false, "Participant should not be whitelisted");
 
 	    // post transaction balances
 	    participantBalance = await gro.balanceOf(participant);
@@ -193,7 +193,7 @@ contract('GRO', function(accounts) {
 	    // the address and byte params in JS
 	    await gro.allocatePresaleTokens(participant, participant, amountTokens, txnHash);
 	    let status = await gro.whitelist(participant);
-	    assert.equal(status, true, "Participant should be whitelisted");
+	    assert.equal(status, false, "Participant not should be whitelisted");
 
 	    // post transaction balances
 	    participantBalance = await gro.balanceOf(participant);
@@ -220,8 +220,6 @@ contract('GRO', function(accounts) {
 	    let gro = await GRO.deployed();
 	    await gro.setVestingContract(vestingContractAddress);
 
-	    // has to be whitelisted
-	    await gro.verifyParticipant(randomAddress);
 	    await gro.buy({from: randomAddress, value: wei});
 
 	    // there should be a transfer of ether to the fundWallet

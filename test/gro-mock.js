@@ -184,8 +184,7 @@ contract('GRO', function(accounts) {
 	    await gro.updateFundingStartBlock(100);
 	    await gro.updateFundingEndBlock(301920); // ICO Numerator
 	    await gro.changeBlock(251110); // last funding round least significant digit is 0
-	    // has to be whitelisted
-	    await gro.verifyParticipant(randomAddress);
+
 	    await gro.buy({from: randomAddress, value: wei});
 	    
 	    let price = await gro.icoNumeratorPrice();
@@ -213,8 +212,7 @@ contract('GRO', function(accounts) {
 	    await gro.updateFundingStartBlock(100);
 	    await gro.updateFundingEndBlock(301920); // ICO Numerator
 	    await gro.changeBlock(251111); // last funding round least significant digit is 0
-	    // has to be whitelisted
-	    await gro.verifyParticipant(randomAddress);
+
 	    await gro.buy({from: randomAddress, value: wei});
 	    
 	    let price = await gro.icoNumeratorPrice();
@@ -242,8 +240,7 @@ contract('GRO', function(accounts) {
 	    await gro.updateFundingStartBlock(100);
 	    await gro.updateFundingEndBlock(301920); // ICO Numerator
 	    await gro.changeBlock(80640 - 10); // first round - ends in 30
-	    // has to be whitelisted
-	    await gro.verifyParticipant(randomAddress);
+
 	    await gro.buy({from: randomAddress, value: wei});
 	    
 	    let price = await gro.icoNumeratorPrice();
@@ -257,6 +254,26 @@ contract('GRO', function(accounts) {
 
     contract('ico rounds', function() {
 
+	contract('pre-ico', function() {
+	    it("allocate 40% bonus", async function(){
+		let wei = web3.toWei(1, "ether"); 
+
+		let gro = await GRO.deployed();
+		await gro.setVestingContract(vestingContractAddress);
+
+		// contract is deployed in the pre-ico phase
+		await gro.sendTransaction({from: randomAddress, value: wei});
+		
+		let price = await gro.icoNumeratorPrice();
+		// GRO contract stores balances in GRO
+		let balanceInGro = (await gro.balanceOf(randomAddress)).toNumber() / precision;
+		
+		assert.equal(price.toNumber(), 14000, "Price should be GRO numerator value");
+		assert.equal(balanceInGro, 14000, "Ether to GRO conversion");
+	    });
+	});
+	
+
 	contract('round 1', function() {
 	    it("allocate 30% bonus", async function(){
 		let wei = web3.toWei(1, "ether"); 
@@ -269,8 +286,7 @@ contract('GRO', function(accounts) {
 		await gro.updateFundingStartBlock(100);
 		await gro.updateFundingEndBlock(301920); // ICO Numerator
 		await gro.changeBlock(80640 - 1); // first round
-		// has to be whitelisted
-		await gro.verifyParticipant(randomAddress);
+
 		await gro.buy({from: randomAddress, value: wei});
 		
 		let price = await gro.icoNumeratorPrice();
@@ -295,8 +311,7 @@ contract('GRO', function(accounts) {
 		await gro.updateFundingStartBlock(100);
 		await gro.updateFundingEndBlock(501920); // ICO Numerator
 		await gro.changeBlock(161280 - 1); // second round
-		// has to be whitelisted
-		await gro.verifyParticipant(randomAddress);
+
 		await gro.buy({from: randomAddress, value: wei});
 		
 		let price = await gro.icoNumeratorPrice();
@@ -321,8 +336,7 @@ contract('GRO', function(accounts) {
 		await gro.updateFundingStartBlock(100);
 		await gro.updateFundingEndBlock(501920); // ICO Numerator
 		await gro.changeBlock(241920 - 1); // third round
-		// has to be whitelisted
-		await gro.verifyParticipant(randomAddress);
+
 		await gro.buy({from: randomAddress, value: wei});
 		
 		let price = await gro.icoNumeratorPrice();
@@ -346,8 +360,7 @@ contract('GRO', function(accounts) {
 		await gro.updateFundingStartBlock(100);
 		await gro.updateFundingEndBlock(501920); // ICO Numerator
 		await gro.changeBlock(241920 + 101); // 4th round
-		// has to be whitelisted
-		await gro.verifyParticipant(randomAddress);
+
 		await gro.buy({from: randomAddress, value: wei});
 		
 		let price = await gro.icoNumeratorPrice();
@@ -372,8 +385,7 @@ contract('GRO', function(accounts) {
 		await gro.updateFundingStartBlock(100);
 		await gro.updateFundingEndBlock(301920); // ICO Numerator
 		await gro.changeBlock(80640 - 10); // first round - ends in 30
-		// has to be whitelisted
-		await gro.verifyParticipant(randomAddress);
+
 		await gro.sendTransaction({from: randomAddress, value: wei});
 		
 		let price = await gro.icoNumeratorPrice();

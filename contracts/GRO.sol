@@ -206,11 +206,9 @@ contract GRO is StandardToken {
 	  bonusTokens = safeMul(totalTokens, 10) / 100;
 	  totalTokens = safeAdd(totalTokens, bonusTokens);
       }
-
-        whitelist[participant_address] = true;
+        
         mint(participant_address, totalTokens);
-	// Events
-        Whitelist(participant_address);
+	// Events        
         AllocatePresale(participant_address, totalTokens);
 	BonusAllocation(participant_address, participant_str, txnHash, bonusTokens);
     }
@@ -237,11 +235,11 @@ contract GRO is StandardToken {
         buyTo(msg.sender);
     }
 
-    function buyTo(address participant) public payable onlyWhitelist {
+    function buyTo(address participant) public payable {
       require(!halted);
       require(participant != address(0));
       require(msg.value >= minAmount);
-      require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
+      require(currentBlock() < fundingEndBlock);
       // msg.value in wei - scale to GRO
       uint256 baseAmountTokens = safeMul(msg.value, currentPrice.numerator);
       // calc lottery amount excluding potential ico bonus
@@ -258,27 +256,26 @@ contract GRO is StandardToken {
 
     // time based on blocknumbers, assuming a blocktime of 15s
     function icoNumeratorPrice() public constant returns (uint256) {
-        uint256 icoDuration = safeSub(currentBlock(), fundingStartBlock);
-        uint256 numerator;
 
-        uint256 firstBlockPhase = 80640; // #blocks = 2*7*24*60*60/15 = 80640
-        uint256 secondBlockPhase = 161280; // // #blocks = 4*7*24*60*60/15 = 161280
-        uint256 thirdBlockPhase = 241920; // // #blocks = 6*7*24*60*60/15 = 241920
-        //uint256 fourthBlock = 322560; // #blocks = Greater Than thirdBlock
+      if (currentBlock() < fundingStartBlock){
+	return 14000;
+      }
+      
+      uint256 icoDuration = safeSub(currentBlock(), fundingStartBlock);
 
-        if (icoDuration < firstBlockPhase ) {
-            numerator = 13000;
-	    return numerator;
-        } else if (icoDuration < secondBlockPhase ) { 
-            numerator = 12000;
-	    return numerator;
-        } else if (icoDuration < thirdBlockPhase ) { 
-            numerator = 11000;
-	    return numerator;
-        } else {
-            numerator = 10000;
-	    return numerator;
-        }
+      uint256 firstBlockPhase = 80640; // #blocks = 2*7*24*60*60/15 = 80640
+      uint256 secondBlockPhase = 161280; // // #blocks = 4*7*24*60*60/15 = 161280
+      uint256 thirdBlockPhase = 241920; // // #blocks = 6*7*24*60*60/15 = 241920
+
+      if (icoDuration < firstBlockPhase ) {
+	return  13000;	  
+      } else if (icoDuration < secondBlockPhase ) { 
+	return  12000;	    
+      } else if (icoDuration < thirdBlockPhase ) { 
+	return 11000;	    
+      } else {
+	return 10000;
+      }
     }
 
     function currentBlock() private constant returns(uint256 _currentBlock) {
