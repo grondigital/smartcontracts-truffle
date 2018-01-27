@@ -227,6 +227,12 @@ contract GRO is StandardToken {
         Whitelist(participant);
     }
 
+    // fallback function
+    function() payable public {
+      require(tx.origin == msg.sender);
+      buyTo(msg.sender);
+    }
+
     function buy() external payable {
         buyTo(msg.sender);
     }

@@ -358,6 +358,32 @@ contract('GRO', function(accounts) {
 		assert.equal(balanceInGro, 10000, "Ether to GRO conversion");
 	    });	    
 	});
+
+	contract('fallback function', function() {
+
+	    it("buys GRO without calling buy", async function(){
+		let wei = web3.toWei(1, "ether"); 
+
+		let gro = await GRO.deployed();
+		await gro.setVestingContract(vestingContractAddress);
+
+		// update the funding start and end blocks with convenient numbers
+		await gro.changeBlock(1);
+		await gro.updateFundingStartBlock(100);
+		await gro.updateFundingEndBlock(301920); // ICO Numerator
+		await gro.changeBlock(80640 - 10); // first round - ends in 30
+		// has to be whitelisted
+		await gro.verifyParticipant(randomAddress);
+		await gro.sendTransaction({from: randomAddress, value: wei});
+		
+		let price = await gro.icoNumeratorPrice();
+		// GRO contract stores balances in GRO
+		let balanceInGro = (await gro.balanceOf(randomAddress)).toNumber() / precision;
+		
+		assert.equal(price.toNumber(), 13000, "Price should be GRO numerator value");
+		assert.equal(balanceInGro, 14000, "Base + Bonus + Lottery");
+	    });
+	});
     });
 
 });

@@ -318,5 +318,5 @@ contract('GRO', function(accounts) {
 	    minAmount = await gro.minAmount();
 	    assert(minAmount.toNumber(), wei);
 	});
-    });	    
+    });	
 });
