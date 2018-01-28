@@ -7,7 +7,7 @@ contract GRO is StandardToken {
     string public name = "Gron Digital";
     string public symbol = "GRO";
     uint256 public decimals = 18;
-    string public version = "10.0";
+    string public version = "11.0";
 
     // Nine Hundred and Fifty million with support for 18 decimals
     uint256 public tokenCap = 950000000 * 10**18;
